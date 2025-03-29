@@ -147,8 +147,11 @@ declare global {
       }
       mcp: {
         removeServer: (server: MCPServer) => Promise<void>
+        restartServer: (server: MCPServer) => Promise<void>
+        stopServer: (server: MCPServer) => Promise<void>
         listTools: (server: MCPServer) => Promise<MCPTool[]>
         callTool: ({ server, name, args }: { server: MCPServer; name: string; args: any }) => Promise<any>
+        getInstallInfo: () => Promise<{ dir: string; uvPath: string; bunPath: string }>
       }
       copilot: {
         getAuthMessage: (
