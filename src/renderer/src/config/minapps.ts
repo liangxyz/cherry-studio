@@ -55,7 +55,7 @@ export const DEFAULT_MIN_APPS: MinAppType[] = [
   {
     id: 'openai',
     name: 'ChatGPT',
-    url: 'https://chatgpt.com/',
+    url: '/https://chatshare.xyz/',
     logo: OpenAiProviderLogo,
     bodered: true
   },
