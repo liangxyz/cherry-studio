@@ -29,24 +29,12 @@ jobs:
             gh api repos/$REPO/actions/artifacts/$artifact_id -X DELETE
           done
 
-  check-repository:
-    runs-on: ubuntu-latest
-    outputs:
-      should_run: ${{ github.repository == 'CherryHQ/cherry-studio' }}
-    steps:
-      - name: Check if running in main repository
-        run: |
-          echo "Running in repository: ${{ github.repository }}"
-          echo "Should run: ${{ github.repository == 'CherryHQ/cherry-studio' }}"
-
   nightly-build:
-    needs: check-repository
-    if: needs.check-repository.outputs.should_run == 'true'
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [windows-latest]
       fail-fast: false
 
     steps:
@@ -89,36 +77,6 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
         shell: bash
-
-      - name: Build Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get install -y rpm
-          yarn build:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: --max-old-space-size=8192
-          MAIN_VITE_CHERRYAI_CLIENT_SECRET: ${{ secrets.MAIN_VITE_CHERRYAI_CLIENT_SECRET }}
-          MAIN_VITE_MINERU_API_KEY: ${{ secrets.MAIN_VITE_MINERU_API_KEY }}
-          RENDERER_VITE_AIHUBMIX_SECRET: ${{ secrets.RENDERER_VITE_AIHUBMIX_SECRET }}
-          RENDERER_VITE_PPIO_APP_SECRET: ${{ secrets.RENDERER_VITE_PPIO_APP_SECRET }}
-
-      - name: Build Mac
-        if: matrix.os == 'macos-latest'
-        run: |
-          yarn build:mac
-        env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: --max-old-space-size=8192
-          MAIN_VITE_CHERRYAI_CLIENT_SECRET: ${{ secrets.MAIN_VITE_CHERRYAI_CLIENT_SECRET }}
-          MAIN_VITE_MINERU_API_KEY: ${{ secrets.MAIN_VITE_MINERU_API_KEY }}
-          RENDERER_VITE_AIHUBMIX_SECRET: ${{ secrets.RENDERER_VITE_AIHUBMIX_SECRET }}
-          RENDERER_VITE_PPIO_APP_SECRET: ${{ secrets.RENDERER_VITE_PPIO_APP_SECRET }}
 
       - name: Build Windows
         if: matrix.os == 'windows-latest'
@@ -176,22 +134,6 @@ jobs:
             $hash = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
             Add-Content -Path SHA256SUMS.txt -Value "$hash  $file"
           }
-          cat SHA256SUMS.txt
-
-      # Generate SHA256 checksums (macOS/Linux)
-      - name: Generate SHA256 checksums (macOS/Linux)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          cd renamed-artifacts
-          echo "# SHA256 checksums for ${{ runner.os }} - $(date +'%Y-%m-%d')" > SHA256SUMS.txt
-          if command -v shasum &>/dev/null; then
-            # macOS
-            shasum -a 256 * 2>/dev/null | grep -v SHA256SUMS.txt >> SHA256SUMS.txt || echo "No files to hash" >> SHA256SUMS.txt
-          else
-            # Linux
-            sha256sum * 2>/dev/null | grep -v SHA256SUMS.txt >> SHA256SUMS.txt || echo "No files to hash" >> SHA256SUMS.txt
-          fi
           cat SHA256SUMS.txt
 
       - name: List files to be uploaded
